@@ -26,14 +26,20 @@ def get_related_urls(categories_urls: List[str], max_urls_count: int) -> List[st
     while len(categories_urls) > 0 and len(urls_list) < max_urls_count:
         current_url: str = categories_urls.pop()
         page_content: str = helper.download_page(current_url)
-
-        subcategories_urls: List[str]
-        pages_urls: List[str]
         subcategories_urls, pages_urls = parse_page(page_content)
 
         categories_urls.extend(subcategories_urls)
 
         remaining_urls_count: int = max_urls_count - len(urls_list)
+        pages_urls = (url for url in pages_urls if not is_special_page(url))
         pages_urls = list(islice(pages_urls, remaining_urls_count))
         urls_list.extend(pages_urls)
     return urls_list
+
+
+def is_special_page(url: str) -> bool:
+    return (url.startswith('/wiki/Book:')
+        or url.startswith('/wiki/File:')
+        or url.startswith('/wiki/Portal:')
+        or url.startswith('/wiki/Template:')
+        or url.startswith('/wiki/User:'))
