@@ -1,21 +1,19 @@
 import codecs
 from typing import List
 
+import bs4
 import requests
-from bs4 import ResultSet
-
-base_url: str = 'https://en.wikipedia.org'
 
 
-def download_page(url: str) -> str:
-    return requests.get(base_url + url).text
+def download_wiki_page(url: str) -> str:
+    return requests.get('https://en.wikipedia.org' + url).text
 
 
-def get_link_url(tag: ResultSet) -> str:
+def get_link_url(tag: bs4.ResultSet) -> str:
     return str(tag.get('href'))
 
 
-def get_link_urls(element: ResultSet) -> List[str]:
+def get_link_urls(element: bs4.ResultSet) -> List[str]:
     return list(get_link_url(tag) for tag in element.find_all('a'))
 
 

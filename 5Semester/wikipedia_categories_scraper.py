@@ -1,13 +1,12 @@
 from itertools import islice
 from typing import List, Tuple
-
 from bs4 import BeautifulSoup
 
 import helper
 
 
 def parse_page(html_content: str) -> Tuple[List[str], List[str]]:
-    parser: BeautifulSoup = BeautifulSoup(html_content, 'html.parser')
+    parser = BeautifulSoup(html_content, 'html.parser')
 
     subcategories = parser.find_all(class_='CategoryTreeItem')
     subcategories_urls: List[str] = list(helper.get_link_url(subcategory.find('a')) for subcategory in subcategories)
@@ -25,7 +24,7 @@ def get_related_urls(categories_urls: List[str], max_urls_count: int) -> List[st
     urls_list: List[str] = []
     while len(categories_urls) > 0 and len(urls_list) < max_urls_count:
         current_url: str = categories_urls.pop()
-        page_content: str = helper.download_page(current_url)
+        page_content: str = helper.download_wiki_page(current_url)
         subcategories_urls, pages_urls = parse_page(page_content)
 
         categories_urls.extend(subcategories_urls)
@@ -34,6 +33,7 @@ def get_related_urls(categories_urls: List[str], max_urls_count: int) -> List[st
         pages_urls = (url for url in pages_urls if not is_special_page(url))
         pages_urls = list(islice(pages_urls, remaining_urls_count))
         urls_list.extend(pages_urls)
+
     return urls_list
 
 
