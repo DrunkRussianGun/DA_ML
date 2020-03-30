@@ -2,6 +2,9 @@ from collections import Counter
 from typing import List, Dict
 
 import pandas as pd
+from pandas import Series
+from scipy.sparse import csr_matrix
+from sklearn.feature_extraction.text import TfidfVectorizer
 
 import helper
 import wikipedia_articles_scraper as articles_scraper
@@ -21,6 +24,10 @@ def main():
 
     print("Parsing articles…")
     parse_articles('articles.csv', 'articles_content.csv', 'articles_links.csv')
+
+    content = pd.read_csv('articles_content.csv', index_col=0)
+    tfidf_matrix = calculate_tfidf(content['text'])
+    print(tfidf_matrix)
 
 
 def get_articles_urls(categories_urls: List[str], urls_output_file: str):
@@ -69,6 +76,11 @@ def parse_articles(urls_input_file: str, content_output_file: str, links_output_
                              ignore_index=True)
     pages_content.to_csv(content_output_file)
     links.fillna('NaN').astype(int).to_csv(links_output_file, index=False)
+
+
+def calculate_tfidf(corpus: Series) -> csr_matrix:
+    vectorizer = TfidfVectorizer(stop_words='english')
+    return vectorizer.fit_transform(corpus)
 
 
 if __name__ == '__main__':
