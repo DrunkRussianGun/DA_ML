@@ -132,3 +132,7 @@ dmypy.json
 
 # JetBrains PyCharm
 .idea/
+
+# Binary files
+*.exe
+*.dll
