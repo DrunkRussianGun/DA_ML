@@ -2,31 +2,23 @@ import math
 
 import matplotlib.pyplot as plot
 import pandas as pd
-from pandas import DataFrame
 
+import plotting
 
-def read_csv_file(csv_file: str) -> DataFrame:
-	return pd.read_csv(csv_file, sep = ";")
-
-
-def draw(ages, sexes, counts):
-	colors = list("b" if sex == "male" else "r" for sex in sexes)
-
-	figure, axis = plot.subplots()
-	axis.bar(ages, counts, color = colors)
-
-	plot.show()
-
-
-dataset = read_csv_file("dataset.csv")
+dataset = pd.read_csv("dataset.csv", sep = ";")
 
 dataset["age"] = dataset["age"]\
 	.apply(lambda age: float(str(age).replace(",", ".")))\
 	.apply(lambda age: math.floor(age / 10) * 10 if not math.isnan(age) else math.nan)
 group_counts = dataset.groupby(["age", "sex"]).size()
-
 print(group_counts)
-draw(
-	list(keys[0] for keys in group_counts.keys()),
-	list(keys[1] for keys in group_counts.keys()),
-	list(group_counts.values))
+
+ages = group_counts.keys().map(lambda key: key[0]).drop_duplicates()
+counts = {
+	"male": [group_counts.get((age, "male"), 0) for age in ages],
+	"female": [group_counts.get((age, "female"), 0) for age in ages]
+}
+
+figure, axis = plot.subplots()
+plotting.bar_plot(axis, ages, counts, colors = ["b", "r"])
+plot.show()
