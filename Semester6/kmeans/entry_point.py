@@ -101,6 +101,47 @@ def clusterize(points: List[Point2D], clusters_count: int) -> Dict[Point2D, List
 
 
 # noinspection PyShadowingNames
+def sum_distances_from_points_to_clusters_centers(clusters: Dict[Point2D, List[Point2D]]) -> float:
+	return sum(
+		sum((point - cluster_center).r for point in points)
+		for cluster_center, points in clusters.items())
+
+
+# noinspection PyShadowingNames
+def clusterize_optimally(points: List[Point2D]) -> Dict[Point2D, List[Point2D]]:
+	# noinspection PyShadowingNames
+	def clusterize_and_sum_distances(clusters_count: int) -> (Dict[Point2D, List[Point2D]], float):
+		clusters = clusterize(points, clusters_count)
+		return clusters, sum_distances_from_points_to_clusters_centers(clusters)
+
+	# Оптимизируем функцию (sum(x) - sum(x + 1)) / (sum(x - 1) - sum(x)), где
+	# sum(x) — сумма расстояний от каждой из точек до соответствующего ей кластера при количестве кластеров x
+	# noinspection PyShadowingNames
+	def calculate_optimizing_function(previous_sum: float, current_sum: float, next_sum: float) -> float:
+		return (current_sum - next_sum) / (previous_sum - current_sum)
+
+	clusters_count = 2
+	previous_clusters, previous_sum = clusterize_and_sum_distances(clusters_count - 1)
+	current_clusters, current_sum = clusterize_and_sum_distances(clusters_count)
+	next_clusters, next_sum = clusterize_and_sum_distances(clusters_count + 1)
+	optimizing_function_value = calculate_optimizing_function(previous_sum, current_sum, next_sum)
+	next_optimizing_function_value = -1
+	while optimizing_function_value > next_optimizing_function_value:
+		if next_optimizing_function_value > 0:
+			optimizing_function_value = next_optimizing_function_value
+
+		next_next_clusters, next_next_sum = clusterize_and_sum_distances(clusters_count + 2)
+		next_optimizing_function_value = calculate_optimizing_function(current_sum, next_sum, next_next_sum)
+
+		previous_clusters, previous_sum = current_clusters, current_sum
+		current_clusters, current_sum = next_clusters, next_sum
+		next_clusters, next_sum = next_next_clusters, next_next_sum
+		clusters_count += 1
+
+	return previous_clusters
+
+
+# noinspection PyShadowingNames
 def draw(clusters: Dict[Point2D, List[Point2D]]):
 	figure, axis = plot.subplots()
 	x_range = max_x - min_x
@@ -121,5 +162,5 @@ def draw(clusters: Dict[Point2D, List[Point2D]]):
 
 
 points = get_random_points(points_count)
-clusters = clusterize(points, 3)
+clusters = clusterize_optimally(points)
 draw(clusters)
