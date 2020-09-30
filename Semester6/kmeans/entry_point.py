@@ -2,6 +2,7 @@ import random
 from math import pi
 from typing import Dict, List
 
+import matplotlib.pyplot as plot
 import numpy
 from point2d import Point2D
 
@@ -99,5 +100,26 @@ def clusterize(points: List[Point2D], clusters_count: int) -> Dict[Point2D, List
 	return group_points_by_clusters(points, current_clusters)
 
 
+# noinspection PyShadowingNames
+def draw(clusters: Dict[Point2D, List[Point2D]]):
+	figure, axis = plot.subplots()
+	x_range = max_x - min_x
+	axis.set_xlim([min_x - x_range, max_x + x_range])
+	y_range = max_y - min_y
+	axis.set_ylim([min_y - y_range, max_y + y_range])
+
+	colors = plot.rcParams["axes.prop_cycle"].by_key()["color"]
+	for i, (cluster_center, points) in enumerate(clusters.items()):
+		color = colors[i % len(colors)]
+		axis.scatter([point.x for point in points], [point.y for point in points], color = color)
+
+		cluster_radius = numpy.max([(point - cluster_center).r for point in points])
+		circle = plot.Circle((cluster_center.x, cluster_center.y), cluster_radius, color = color, fill = False)
+		axis.add_artist(circle)
+
+	plot.show()
+
+
 points = get_random_points(points_count)
 clusters = clusterize(points, 3)
+draw(clusters)
