@@ -1,5 +1,5 @@
 import random
-from math import pi
+from math import inf, pi
 from typing import Dict, List
 
 import matplotlib.pyplot as plot
@@ -118,6 +118,8 @@ def clusterize_optimally(points: List[Point2D]) -> Dict[Point2D, List[Point2D]]:
 	# sum(x) — сумма расстояний от каждой из точек до соответствующего ей кластера при количестве кластеров x
 	# noinspection PyShadowingNames
 	def calculate_optimizing_function(previous_sum: float, current_sum: float, next_sum: float) -> float:
+		if previous_sum == current_sum:
+			return inf
 		return (current_sum - next_sum) / (previous_sum - current_sum)
 
 	clusters_count = 2
