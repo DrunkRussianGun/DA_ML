@@ -1,6 +1,8 @@
 import random
+from math import pi
 from typing import Dict, List
 
+import numpy
 from point2d import Point2D
 
 points_count = 250
@@ -25,25 +27,65 @@ def get_random_points(count: int) -> List[Point2D]:
 
 
 # noinspection PyShadowingNames
+def get_mean_point(points: List[Point2D]) -> Point2D:
+	return Point2D(
+		numpy.mean(numpy.array([point.x for point in points])),
+		numpy.mean(numpy.array([point.y for point in points])))
+
+
+# noinspection PyShadowingNames
 def get_initial_clusters(points: List[Point2D], clusters_count: int) -> List[Point2D]:
-	raise NotImplementedError()
+	circle_center = get_mean_point(points)
+	circle_radius = numpy.max([(point - circle_center).r for point in points])
+
+	angle_step = pi * 2 / clusters_count
+	return list(
+		circle_center + Point2D(r = circle_radius, a = angle_step * i)
+		for i in range(0, clusters_count))
 
 
 # noinspection PyShadowingNames
 def group_points_by_clusters(points: List[Point2D], clusters: List[Point2D]) -> Dict[Point2D, List[Point2D]]:
-	raise NotImplementedError()
+	cluster_to_points_map = {}
+	for point in points:
+		cluster = min(clusters, key = lambda cluster: (cluster - point).r)
+		if cluster not in cluster_to_points_map:
+			cluster_to_points_map[cluster] = [point]
+		else:
+			cluster_to_points_map[cluster].append(point)
+	return cluster_to_points_map
 
 
 # noinspection PyShadowingNames
 def get_next_clusters(points: List[Point2D], current_clusters: List[Point2D]) -> List[Point2D]:
-	raise NotImplementedError()
+	current_points_groups = group_points_by_clusters(points, current_clusters)
+	return list(
+		get_mean_point(points_group)
+		for points_group in current_points_groups.values())
 
 
+# noinspection PyShadowingNames
 def clusters_groups_are_same(
 		points: List[Point2D],
 		first_clusters: List[Point2D],
 		second_clusters: List[Point2D]) -> bool:
-	raise NotImplementedError()
+	first_groups_of_points = list(
+		set(points) for points in group_points_by_clusters(points, first_clusters).values())
+	second_groups_of_points = list(
+		set(points) for points in group_points_by_clusters(points, second_clusters).values())
+	for first_group in first_groups_of_points:
+		group_is_deleted = False
+		for second_group in second_groups_of_points:
+			if first_group == second_group:
+				first_groups_of_points.remove(first_group)
+				second_groups_of_points.remove(second_group)
+				group_is_deleted = True
+				break
+
+		if not group_is_deleted:
+			return False
+
+	return True
 
 
 # noinspection PyShadowingNames
