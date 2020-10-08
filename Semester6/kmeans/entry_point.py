@@ -46,10 +46,7 @@ def group_points_by_clusters(points: List[Point2D], clusters: List[Point2D]) -> 
 	cluster_to_points_map = {}
 	for point in points:
 		cluster = min(clusters, key = lambda cluster: (cluster - point).r)
-		if cluster not in cluster_to_points_map:
-			cluster_to_points_map[cluster] = [point]
-		else:
-			cluster_to_points_map[cluster].append(point)
+		cluster_to_points_map.setdefault(cluster, []).append(point)
 	return cluster_to_points_map
 
 
