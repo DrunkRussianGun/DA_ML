@@ -17,7 +17,6 @@ def read_points_from_file(file: str) -> List[Point2D]:
 	raise NotImplementedError()
 
 
-# noinspection PyShadowingNames
 def get_random_points(count: int) -> List[Point2D]:
 	points = list()
 	for _ in range(0, count):
@@ -27,14 +26,12 @@ def get_random_points(count: int) -> List[Point2D]:
 	return points
 
 
-# noinspection PyShadowingNames
 def get_mean_point(points: List[Point2D]) -> Point2D:
 	return Point2D(
 		numpy.mean(numpy.array([point.x for point in points])),
 		numpy.mean(numpy.array([point.y for point in points])))
 
 
-# noinspection PyShadowingNames
 def get_initial_clusters(points: List[Point2D], clusters_count: int) -> List[Point2D]:
 	circle_center = get_mean_point(points)
 	circle_radius = numpy.max([(point - circle_center).r for point in points])
@@ -45,19 +42,14 @@ def get_initial_clusters(points: List[Point2D], clusters_count: int) -> List[Poi
 		for i in range(0, clusters_count))
 
 
-# noinspection PyShadowingNames
 def group_points_by_clusters(points: List[Point2D], clusters: List[Point2D]) -> Dict[Point2D, List[Point2D]]:
 	cluster_to_points_map = {}
 	for point in points:
 		cluster = min(clusters, key = lambda cluster: (cluster - point).r)
-		if cluster not in cluster_to_points_map:
-			cluster_to_points_map[cluster] = [point]
-		else:
-			cluster_to_points_map[cluster].append(point)
+		cluster_to_points_map.setdefault(cluster, []).append(point)
 	return cluster_to_points_map
 
 
-# noinspection PyShadowingNames
 def get_next_clusters(points: List[Point2D], current_clusters: List[Point2D]) -> List[Point2D]:
 	current_points_groups = group_points_by_clusters(points, current_clusters)
 	return list(
@@ -65,7 +57,6 @@ def get_next_clusters(points: List[Point2D], current_clusters: List[Point2D]) ->
 		for points_group in current_points_groups.values())
 
 
-# noinspection PyShadowingNames
 def clusters_groups_are_same(
 		points: List[Point2D],
 		first_clusters: List[Point2D],
@@ -89,7 +80,6 @@ def clusters_groups_are_same(
 	return True
 
 
-# noinspection PyShadowingNames
 def clusterize(points: List[Point2D], clusters_count: int) -> Dict[Point2D, List[Point2D]]:
 	previous_clusters = get_initial_clusters(points, clusters_count)
 	current_clusters = get_next_clusters(points, previous_clusters)
@@ -100,14 +90,12 @@ def clusterize(points: List[Point2D], clusters_count: int) -> Dict[Point2D, List
 	return group_points_by_clusters(points, current_clusters)
 
 
-# noinspection PyShadowingNames
 def sum_distances_from_points_to_clusters_centers(clusters: Dict[Point2D, List[Point2D]]) -> float:
 	return sum(
 		sum((point - cluster_center).r for point in points)
 		for cluster_center, points in clusters.items())
 
 
-# noinspection PyShadowingNames
 def clusterize_optimally(points: List[Point2D]) -> Dict[Point2D, List[Point2D]]:
 	# noinspection PyShadowingNames
 	def clusterize_and_sum_distances(clusters_count: int) -> (Dict[Point2D, List[Point2D]], float):
@@ -143,7 +131,6 @@ def clusterize_optimally(points: List[Point2D]) -> Dict[Point2D, List[Point2D]]:
 	return previous_clusters
 
 
-# noinspection PyShadowingNames
 def draw(clusters: Dict[Point2D, List[Point2D]]):
 	figure, axis = plot.subplots()
 	x_range = max_x - min_x
@@ -163,6 +150,11 @@ def draw(clusters: Dict[Point2D, List[Point2D]]):
 	plot.show()
 
 
-points = get_random_points(points_count)
-clusters = clusterize_optimally(points)
-draw(clusters)
+def main():
+	points = get_random_points(points_count)
+	clusters = clusterize_optimally(points)
+	draw(clusters)
+
+
+if __name__ == '__main__':
+	main()
