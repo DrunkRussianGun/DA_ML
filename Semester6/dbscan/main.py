@@ -84,6 +84,13 @@ def clusterize(
 		for neighbor in neighbors_clusters_points:
 			point_to_cluster_map[neighbor] = current_cluster_id
 
+	for point in yellow_points:
+		neighbors = list(get_neighbors(green_points, point, max_neighbor_distance))
+		nearest_neighbor = neighbors[min(
+			range(len(neighbors)),
+			key = lambda i: (neighbors[i] - point).r)]
+		point_to_cluster_map[point] = point_to_cluster_map[nearest_neighbor]
+
 	return point_to_cluster_map
 
 
