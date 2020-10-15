@@ -1,6 +1,8 @@
 import random
 from typing import Dict, Iterable, List, Set
 
+import matplotlib.pyplot as plot
+import numpy
 from point2d import Point2D
 
 
@@ -85,6 +87,43 @@ def clusterize(
 	return point_to_cluster_map
 
 
+def draw(
+		clusters: Dict[int, List[Point2D]],
+		green_points: Set[Point2D],
+		yellow_points: Set[Point2D],
+		red_points: Set[Point2D],
+		min_x: int,
+		max_x: int,
+		min_y: int,
+		max_y: int):
+	figure, axis = plot.subplots()
+	axis.set_xlim([min_x, max_x])
+	axis.set_ylim([min_y, max_y])
+
+	colors = plot.rcParams["axes.prop_cycle"].by_key()["color"]
+	for i, (cluster_id, points) in enumerate(clusters.items()):
+		cluster_color = colors[i % len(colors)]
+		cluster_center = Point2D(
+			numpy.mean(numpy.array([point.x for point in points])),
+			numpy.mean(numpy.array([point.y for point in points])))
+		cluster_radius = numpy.max([(point - cluster_center).r for point in points])
+		cluster = plot.Circle(
+			(cluster_center.x, cluster_center.y),
+			cluster_radius,
+			color = cluster_color,
+			fill = False)
+		axis.add_artist(cluster)
+
+	def draw_points(points: Set[Point2D], color: str):
+		axis.scatter([point.x for point in points], [point.y for point in points], color = color)
+
+	draw_points(green_points, "g")
+	draw_points(yellow_points, "y")
+	draw_points(red_points, "r")
+
+	plot.show()
+
+
 def main(
 		points_count: int,
 		min_x: int,
@@ -108,6 +147,19 @@ def main(
 		green_points,
 		yellow_points,
 		max_neighbor_distance)
+
+	cluster_to_points_map = {}
+	for point, cluster in point_to_cluster_map.items():
+		cluster_to_points_map.setdefault(cluster, []).append(point)
+	draw(
+		cluster_to_points_map,
+		green_points,
+		yellow_points,
+		red_points,
+		min_x,
+		max_x,
+		min_y,
+		max_y)
 
 
 if __name__ == '__main__':
