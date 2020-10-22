@@ -8,8 +8,25 @@ import numpy
 from point2d import Point2D
 
 
-def get_training_points() -> Dict[int, List[Point2D]]:
-	raise NotImplementedError()
+def get_training_points(
+		clusters_count: int,
+		points_count_in_cluster: int,
+		min_x: int,
+		max_x: int,
+		min_y: int,
+		max_y: int) -> Dict[int, List[Point2D]]:
+	data = dict((i, []) for i in range(clusters_count))
+	for cluster in range(clusters_count):
+		cluster_center = Point2D(
+			random.uniform(min_x, max_x),
+			random.uniform(min_y, max_y))
+		x_radius = (max_x - min_x) / clusters_count / 3
+		y_radius = (max_y - min_y) / clusters_count / 3
+		data[cluster] = [
+			Point2D(random.gauss(cluster_center.x, x_radius), random.gauss(cluster_center.y, y_radius))
+			for _ in range(points_count_in_cluster)]
+
+	return data
 
 
 def get_random_points(count: int, min_x: int, max_x: int, min_y: int, max_y: int) -> List[Point2D]:
@@ -89,7 +106,7 @@ def draw(
 
 
 def main():
-	existing_points = get_training_points()
+	existing_points = get_training_points(5, 7, -100, 100, -100, 100)
 	draw(existing_points, {}, -110, 110, -110, 110)
 
 	new_points = get_random_points(25, -100, 100, -100, 100)
