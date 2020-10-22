@@ -3,6 +3,8 @@ import random
 from itertools import islice
 from typing import Dict, List, Tuple
 
+import matplotlib.pyplot as plot
+import numpy
 from point2d import Point2D
 
 
@@ -59,18 +61,41 @@ def classify(
 	return classified_points
 
 
-def draw(existing_points: Dict[int, List[Point2D]], classified_new_points: Dict[int, List[Point2D]]):
-	raise NotImplementedError()
+def draw(
+		existing_points: Dict[int, List[Point2D]],
+		classified_new_points: Dict[int, List[Point2D]],
+		min_x: int,
+		max_x: int,
+		min_y: int,
+		max_y: int):
+	figure, axis = plot.subplots()
+	axis.set_xlim([min_x, max_x])
+	axis.set_ylim([min_y, max_y])
+
+	colors = plot.rcParams["axes.prop_cycle"].by_key()["color"]
+	for i, cluster in enumerate(existing_points.keys()):
+		color = colors[i % len(colors)]
+		points = existing_points[cluster] + classified_new_points.get(cluster, [])
+		axis.scatter([point.x for point in points], [point.y for point in points], color = color)
+
+		cluster_center = Point2D(
+			numpy.mean(numpy.array([point.x for point in points])),
+			numpy.mean(numpy.array([point.y for point in points])))
+		cluster_radius = numpy.max([(point - cluster_center).r for point in points])
+		circle = plot.Circle((cluster_center.x, cluster_center.y), cluster_radius, color = color, fill = False)
+		axis.add_artist(circle)
+
+	plot.show()
 
 
 def main():
 	existing_points = get_training_points()
-	draw(existing_points, {})
+	draw(existing_points, {}, -110, 110, -110, 110)
 
 	new_points = get_random_points(25, -100, 100, -100, 100)
 	classified_new_points = classify(existing_points, new_points)
 
-	draw(existing_points, classified_new_points)
+	draw(existing_points, classified_new_points, -110, 110, -110, 110)
 
 
 if __name__ == '__main__':
