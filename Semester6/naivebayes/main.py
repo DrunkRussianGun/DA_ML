@@ -1,4 +1,6 @@
 import os
+import random
+from typing import List
 
 import pandas as pd
 from pandas import DataFrame
@@ -19,10 +21,19 @@ def check_disease_names(diseases: DataFrame, symptoms_probabilities: DataFrame):
 			"Файл с симптомами: " + str(sorted(diseases_names_from_symptoms_file)))
 
 
+def get_patient_symptoms(count: int) -> List[bool]:
+	return [bool(random.getrandbits(1)) for _ in range(count)]
+
+
 def main():
 	diseases = read_data_from_file("diseases.csv")
 	symptoms_probabilities = read_data_from_file("symptoms_probabilities.csv")
 	check_disease_names(diseases, symptoms_probabilities)
+
+	patient_symptoms = pd.DataFrame(
+		get_patient_symptoms(len(symptoms_probabilities.index)),
+		index = symptoms_probabilities.index,
+		columns = ["Наличие"])
 
 
 if __name__ == '__main__':
