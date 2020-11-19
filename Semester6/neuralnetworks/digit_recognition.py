@@ -1,0 +1,2 @@
+def recognize():
+	raise NotImplementedError()
