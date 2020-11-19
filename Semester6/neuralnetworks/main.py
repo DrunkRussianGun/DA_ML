@@ -9,7 +9,7 @@ def main():
 
 	pygame.init()
 	pygame.display.set_caption("Digit recognition")
-	screen = pygame.display.set_mode((640, 480))
+	screen = pygame.display.set_mode((configuration.window_width, configuration.window_height))
 	screen.fill(pygame.color.THECOLORS["white"])
 
 	game_running = True
