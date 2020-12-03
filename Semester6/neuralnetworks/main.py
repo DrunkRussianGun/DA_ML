@@ -5,6 +5,7 @@ import pygame
 import digit_recognition
 from configuration import get_configuration
 from drag_and_drop_controller import DragAndDropController
+from timer import Timer
 
 
 def main():
@@ -32,6 +33,8 @@ def main():
 	left_click_controller = DragAndDropController(get_mouse_position, draw_line)
 	right_click_controller = DragAndDropController(get_mouse_position, erase_line)
 
+	screen_capture_interval_in_seconds = 0.5
+	screen_capture_timer = Timer(screen_capture_interval_in_seconds, True)
 	game_running = True
 	while game_running:
 		for event in pygame.event.get():
@@ -57,7 +60,10 @@ def main():
 
 		pygame.display.update()
 
-		# digit_recognition.recognize()
+		if screen_capture_timer.is_over():
+			screenshot = pygame.surfarray.array2d(screen)
+			# digit_recognition.recognize()
+			screen_capture_timer.start()
 
 
 if __name__ == '__main__':
