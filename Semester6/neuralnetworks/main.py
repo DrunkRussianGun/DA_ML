@@ -2,8 +2,8 @@ from typing import Tuple
 
 import pygame
 
-import digit_recognition
 from configuration import get_configuration
+from digit_recognition import load_recognizer, recognize, save_recognizer, train_recognizer
 from drag_and_drop_controller import DragAndDropController
 from timer import Timer
 
@@ -11,11 +11,20 @@ from timer import Timer
 def main():
 	configuration = get_configuration()
 
+	digit_recognizer = None
+	file_name_with_recognizer = "trained_recognizer.sav"
+	if not configuration.force_train:
+		digit_recognizer = load_recognizer(file_name_with_recognizer)
+	if digit_recognizer is None:
+		digit_recognizer = train_recognizer()
+		if configuration.save_to_file:
+			save_recognizer(digit_recognizer, file_name_with_recognizer)
+
 	pygame.init()
-	pygame.display.set_caption("Digit recognition")
 	screen = pygame.display.set_mode((configuration.window_width, configuration.window_height))
 	background_color = pygame.color.THECOLORS["white"]
 	screen.fill(background_color)
+	set_caption()
 
 	line_width = 10
 	eraser_width = 30
@@ -62,8 +71,21 @@ def main():
 
 		if screen_capture_timer.is_over():
 			screenshot = pygame.surfarray.array2d(screen)
-			# digit_recognition.recognize()
+
+			recognized_digit = recognize(digit_recognizer, screenshot)
+			set_caption(
+				f"recognized as {recognized_digit}"
+				if recognized_digit is not None
+				else "not recognized")
+
 			screen_capture_timer.start()
+
+
+def set_caption(caption: str = None):
+	new_caption = "Digit recognition"
+	if caption is not None and len(caption) > 0:
+		new_caption += f" ({caption})"
+	pygame.display.set_caption(new_caption)
 
 
 if __name__ == '__main__':
