@@ -1,3 +1,6 @@
+import os
+
+import joblib
 import numpy
 from PIL import Image
 from sklearn import datasets
@@ -36,8 +39,10 @@ def recognize(recognizer: MLPClassifier, screenshot: Image) -> int:
 
 
 def load_recognizer(file_name: str) -> MLPClassifier:
-	raise NotImplementedError()
+	if not os.path.isfile(file_name):
+		return None
+	return joblib.load(file_name)
 
 
 def save_recognizer(recognizer: MLPClassifier, file_name: str):
-	raise NotImplementedError()
+	joblib.dump(recognizer, file_name, compress = ("lzma", 9))
