@@ -7,6 +7,8 @@ from sklearn import datasets
 from sklearn.model_selection import train_test_split
 from sklearn.neural_network import MLPClassifier
 
+from configuration import Configuration
+
 
 def train_recognizer() -> MLPClassifier:
 	digits = datasets.load_digits()
@@ -30,8 +32,11 @@ def train_recognizer() -> MLPClassifier:
 	return recognizer
 
 
-def recognize(recognizer: MLPClassifier, screenshot: Image) -> int:
+def recognize(recognizer: MLPClassifier, screenshot: Image, debug: bool) -> int:
 	screenshot = screenshot.resize((8, 8), Image.LANCZOS)
+	if debug:
+		screenshot.save(Configuration.get_debug_file_path("4.resized.png"))
+
 	recognizer_input = numpy\
 		.array([x / 255 * 16 for x in screenshot.tobytes()])\
 		.reshape(1, -1)

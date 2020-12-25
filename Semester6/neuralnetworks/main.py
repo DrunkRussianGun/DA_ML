@@ -1,10 +1,11 @@
+import os
 from typing import Tuple
 
 import numpy
 import pygame
 from PIL import Image, ImageOps
 
-from configuration import get_configuration
+from configuration import Configuration, get_configuration
 from digit_recognition import load_recognizer, recognize, save_recognizer, train_recognizer
 from drag_and_drop_controller import DragAndDropController
 from timer import Timer
@@ -12,6 +13,8 @@ from timer import Timer
 
 def main():
 	configuration = get_configuration()
+	if configuration.debug:
+		os.makedirs(Configuration.get_debug_file_path(""), exist_ok = True)
 
 	digit_recognizer = None
 	file_name_with_recognizer = "trained_recognizer.sav"
@@ -76,11 +79,11 @@ def main():
 			screenshot = Image\
 				.fromarray(screenshot_bytes, "I")\
 				.convert("L")
-			prepared_screenshot = prepare_screenshot(screenshot)
+			prepared_screenshot = prepare_screenshot(screenshot, configuration.debug)
 
 			recognized_digit = None
 			if prepared_screenshot is not None:
-				recognized_digit = recognize(digit_recognizer, prepared_screenshot)
+				recognized_digit = recognize(digit_recognizer, prepared_screenshot, configuration.debug)
 			recognition_result_message = f"Recognized as {recognized_digit}"\
 				if recognized_digit is not None\
 				else "Not recognized"
@@ -97,9 +100,14 @@ def set_caption(caption: str = None):
 	pygame.display.set_caption(new_caption)
 
 
-def prepare_screenshot(screenshot: Image) -> Image:
+def prepare_screenshot(screenshot: Image, debug: bool) -> Image:
+	if debug:
+		screenshot.save(Configuration.get_debug_file_path("0.original.png"))
+
 	# Нейронная сеть принимает на вход цифру белого цвета на чёрном фоне
 	screenshot = ImageOps.invert(screenshot)
+	if debug:
+		screenshot.save(Configuration.get_debug_file_path("1.inverted.png"))
 
 	# Находим пиксели, не относящиеся к фону
 	pixels = numpy.asarray(screenshot)
@@ -116,6 +124,8 @@ def prepare_screenshot(screenshot: Image) -> Image:
 	if left_bound == right_bound or top_bound == bottom_bound:
 		return None
 	screenshot = screenshot.crop((left_bound, top_bound, right_bound, bottom_bound))
+	if debug:
+		screenshot.save(Configuration.get_debug_file_path("2.cropped.png"))
 
 	# Вписываем изображение в минимальный квадрат так, чтобы цифра оказалась посередине
 	square_size = max(right_bound - left_bound, bottom_bound - top_bound)
@@ -124,6 +134,8 @@ def prepare_screenshot(screenshot: Image) -> Image:
 	top_bound = (square_size - screenshot.size[1]) // 2
 	square.paste(screenshot, (left_bound, top_bound))
 	screenshot = square
+	if debug:
+		screenshot.save(Configuration.get_debug_file_path("3.squared.png"))
 
 	return screenshot
 
