@@ -1,6 +1,8 @@
 from typing import Tuple
 
+import numpy
 import pygame
+from PIL import Image, ImageOps
 
 from configuration import get_configuration
 from digit_recognition import load_recognizer, recognize, save_recognizer, train_recognizer
@@ -70,13 +72,20 @@ def main():
 		pygame.display.update()
 
 		if screen_capture_timer.is_over():
-			screenshot = pygame.surfarray.array2d(screen)
+			screenshot_bytes = pygame.surfarray.array2d(screen).transpose()
+			screenshot = Image\
+				.fromarray(screenshot_bytes, "I")\
+				.convert("L")
+			prepared_screenshot = prepare_screenshot(screenshot)
 
-			recognized_digit = recognize(digit_recognizer, screenshot)
-			set_caption(
-				f"recognized as {recognized_digit}"
-				if recognized_digit is not None
-				else "not recognized")
+			recognized_digit = None
+			if prepared_screenshot is not None:
+				recognized_digit = recognize(digit_recognizer, prepared_screenshot)
+			recognition_result_message = f"Recognized as {recognized_digit}"\
+				if recognized_digit is not None\
+				else "Not recognized"
+			print(recognition_result_message)
+			set_caption(recognition_result_message)
 
 			screen_capture_timer.start()
 
@@ -86,6 +95,37 @@ def set_caption(caption: str = None):
 	if caption is not None and len(caption) > 0:
 		new_caption += f" ({caption})"
 	pygame.display.set_caption(new_caption)
+
+
+def prepare_screenshot(screenshot: Image) -> Image:
+	# Нейронная сеть принимает на вход цифру белого цвета на чёрном фоне
+	screenshot = ImageOps.invert(screenshot)
+
+	# Находим пиксели, не относящиеся к фону
+	pixels = numpy.asarray(screenshot)
+	image_pixels_indexes = numpy.where(pixels > 0)
+	if image_pixels_indexes[0].size == 0:
+		return None
+
+	# Вырезаем цифру из изображения
+	left_bound, top_bound, right_bound, bottom_bound =\
+		min(image_pixels_indexes[1]),\
+		min(image_pixels_indexes[0]),\
+		max(image_pixels_indexes[1]),\
+		max(image_pixels_indexes[0])
+	if left_bound == right_bound or top_bound == bottom_bound:
+		return None
+	screenshot = screenshot.crop((left_bound, top_bound, right_bound, bottom_bound))
+
+	# Вписываем изображение в минимальный квадрат так, чтобы цифра оказалась посередине
+	square_size = max(right_bound - left_bound, bottom_bound - top_bound)
+	square = Image.new("L", (square_size, square_size))
+	left_bound = (square_size - screenshot.size[0]) // 2
+	top_bound = (square_size - screenshot.size[1]) // 2
+	square.paste(screenshot, (left_bound, top_bound))
+	screenshot = square
+
+	return screenshot
 
 
 if __name__ == '__main__':

@@ -1,4 +1,5 @@
-from numpy import ndarray
+import numpy
+from PIL import Image
 from sklearn import datasets
 from sklearn.model_selection import train_test_split
 from sklearn.neural_network import MLPClassifier
@@ -26,8 +27,12 @@ def train_recognizer() -> MLPClassifier:
 	return recognizer
 
 
-def recognize(recognizer: MLPClassifier, screenshot: ndarray) -> int:
-	return None
+def recognize(recognizer: MLPClassifier, screenshot: Image) -> int:
+	screenshot = screenshot.resize((8, 8), Image.LANCZOS)
+	recognizer_input = numpy\
+		.array([x / 255 * 16 for x in screenshot.tobytes()])\
+		.reshape(1, -1)
+	return recognizer.predict(recognizer_input)[0]
 
 
 def load_recognizer(file_name: str) -> MLPClassifier:
