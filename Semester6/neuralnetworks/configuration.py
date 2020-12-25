@@ -13,13 +13,15 @@ def get_configuration() -> Configuration:
 	parser = ArgumentParser()
 	parser.add_argument(
 		"-ww",
-		"--window_width",
+		"--window-width",
+		metavar = "<width>",
 		type = int,
 		help = "Width of the game window (default 640)",
 		default = 640)
 	parser.add_argument(
 		"-wh",
-		"--window_height",
+		"--window-height",
+		metavar = "<height>",
 		type = int,
 		help = "Height of the game window (default 480)",
 		default = 480)
