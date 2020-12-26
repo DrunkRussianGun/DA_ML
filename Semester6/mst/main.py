@@ -1,11 +1,13 @@
 import random
 
+import matplotlib.pyplot as plot
+import networkx
 import numpy
 from numpy import ndarray
 
 
 def main():
-	vertices_count = 20
+	vertices_count = 10
 	clusters_count = 3
 	graph = get_random_graph(vertices_count)
 	clustered_graph = clusterize(graph, clusters_count)
@@ -54,7 +56,21 @@ def clusterize(graph: ndarray, clusters_count: int) -> ndarray:
 
 
 def draw(graph: ndarray):
-	raise NotImplementedError()
+	graph_view = networkx.Graph(strict = False)
+
+	vertices_count = graph.shape[0]
+	for i in range(vertices_count):
+		graph_view.add_node(i)
+	for i in range(vertices_count):
+		for j in range(i + 1, vertices_count):
+			if graph[i, j] > 0:
+				graph_view.add_edge(i, j, weight = "{:.1f}".format(graph[i, j]))
+
+	graph_view_position = networkx.random_layout(graph_view)
+	networkx.draw_networkx(graph_view, graph_view_position, with_labels = True)
+	edge_labels = networkx.get_edge_attributes(graph_view, "weight")
+	networkx.draw_networkx_edge_labels(graph_view, pos = graph_view_position, edge_labels = edge_labels)
+	plot.show()
 
 
 if __name__ == '__main__':
