@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 import random
 from typing import List
 
@@ -30,9 +31,22 @@ class Solution:
 			raise ValueError(
 				f"Количество значений переменных {variable_values} должно совпадать " +
 				f"с количеством переменных в уравнении {equation}")
-		self.variable_values = variable_values
 		self._equation = equation
-		self._score = Solution._score(equation, variable_values)
+		self.variable_values = variable_values
+
+	@property
+	def variable_values(self) -> List[int]:
+		return self._variable_values
+
+	@variable_values.setter
+	def variable_values(self, value: List[int]):
+		self._variable_values = value
+		self._expression_value = Solution._expression_value(self._equation, value)
+		self._score = Solution._score(self._expression_value)
+
+	@property
+	def expression_value(self) -> int:
+		return self._expression_value
 
 	@property
 	def score(self) -> float:
@@ -44,7 +58,6 @@ class Solution:
 				[old_value, new_value],
 				p = [value_mutation_probability, 1 - value_mutation_probability])
 			for old_value, new_value in zip(self.variable_values, mutant_solution.variable_values)]
-		self._score = Solution._score(self._equation, self.variable_values)
 
 	@staticmethod
 	def breed(first: Solution, second: Solution) -> Solution:
@@ -59,10 +72,12 @@ class Solution:
 			for index, value in enumerate(self.variable_values, start = 1))
 
 	@staticmethod
-	def _score(equation: DiophantineEquation, variable_values: List[int]) -> float:
-		return 1 / abs(
-			sum(numpy.multiply(equation.coefficients, variable_values)) +
-			equation.constant_term)
+	def _expression_value(equation: DiophantineEquation, variable_values: List[int]) -> int:
+		return sum(numpy.multiply(equation.coefficients, variable_values)) + equation.constant_term
+
+	@staticmethod
+	def _score(expression_value: int) -> float:
+		return 1 / abs(expression_value) if expression_value != 0 else math.inf
 
 
 def main():
@@ -74,19 +89,23 @@ def main():
 
 
 def generate_random_diophantine_equation(variables_count: int) -> DiophantineEquation:
+	max_coefficient_modulus = 10
+	max_constant_term_modulus = 30
+	half_of_probabilities_array = [1 / (max_coefficient_modulus * 2)] * max_coefficient_modulus
 	return DiophantineEquation(
 		# При генерации коэффициентов переменных исключаем 0
 		[numpy.random.choice(
-				range(-30, 30 + 1),
-				p = [1 / (30 * 2)] * 30 + [0] + [1 / (30 * 2)] * 30)
+				range(-max_coefficient_modulus, max_coefficient_modulus + 1),
+				p = half_of_probabilities_array + [0] + half_of_probabilities_array)
 			for _ in range(variables_count)],
-		random.randint(-100, 100))
+		random.randint(-max_constant_term_modulus, max_constant_term_modulus))
 
 
 def get_solution(equation: DiophantineEquation) -> Solution:
 	initial_population_size = 50
 	new_population_size = 50
-	mutation_probability = 0.05
+	kill_previous_population = True
+	mutation_probability = 0.1
 	population = generate_population(equation, initial_population_size)
 
 	solution_found = False
@@ -103,7 +122,7 @@ def get_solution(equation: DiophantineEquation) -> Solution:
 			child = Solution.breed(first_parent, second_parent)
 			new_population.append(child)
 
-			if child.score == 0:
+			if child.expression_value == 0:
 				return child
 
 		mutant_population = generate_population(equation, new_population_size)
@@ -111,10 +130,14 @@ def get_solution(equation: DiophantineEquation) -> Solution:
 			need_mutation = numpy.random.choice([True, False], p = [mutation_probability, 1 - mutation_probability])
 			if need_mutation:
 				solution.mutate(mutant_population[index])
-				if solution.score == 0:
+				if solution.expression_value == 0:
 					return solution
 
-		population += new_population
+		population = new_population if kill_previous_population else population + new_population
+
+		print(
+			"Maximum score of new population: " +
+			str(max(solution.score for solution in new_population)))
 
 
 def generate_population(equation: DiophantineEquation, size: int) -> List[Solution]:
