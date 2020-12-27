@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+import random
 from typing import List
+
+import numpy
 
 
 class DiophantineEquation:
@@ -49,15 +52,59 @@ def main():
 
 
 def generate_random_diophantine_equation(variables_count: int) -> DiophantineEquation:
-	raise NotImplementedError()
+	return DiophantineEquation(
+		# При генерации коэффициентов переменных исключаем 0
+		[numpy.random.choice(
+				range(-30, 30 + 1),
+				p = [1 / (30 * 2)] * 30 + [0] + [1 / (30 * 2)] * 30)
+			for _ in range(variables_count)],
+		random.randint(-100, 100))
 
 
 def get_solution(equation: DiophantineEquation) -> Solution:
-	raise NotImplementedError()
+	initial_population_size = 50
+	new_population_size = 50
+	mutation_probability = 0.05
+	population = generate_population(equation, initial_population_size)
+
+	solution_found = False
+	while not solution_found:
+		population_score_sum = sum(solution.score for solution in population)
+		solutions_probabilities = [solution.score / population_score_sum for solution in population]
+		new_population = []
+		for _ in range(new_population_size):
+			first_parent, second_parent = numpy.random.choice(
+				population,
+				size = 2,
+				replace = False,
+				p = solutions_probabilities)
+			child = Solution.breed(first_parent, second_parent)
+			new_population.append(child)
+
+			if child.score == 0:
+				return child
+
+		for solution in new_population:
+			need_mutation = numpy.random.choice([True, False], p = [mutation_probability, 1 - mutation_probability])
+			if need_mutation:
+				solution.mutate()
+				if solution.score == 0:
+					return solution
+
+		population += new_population
 
 
-def generate_solution(equation: DiophantineEquation) -> Solution:
-	raise NotImplementedError()
+def generate_population(equation: DiophantineEquation, size: int) -> List[Solution]:
+	max_coefficient_modulus = max(abs(coefficient) for coefficient in equation.coefficients)
+	max_solution_value_modulus = abs(
+		max_coefficient_modulus *
+		equation.constant_term if equation.constant_term != 0 else 1)
+	return [
+		Solution(
+			equation,
+			[random.randint(-max_solution_value_modulus, max_solution_value_modulus)
+				for _ in range(len(equation.coefficients))])
+		for _ in range(size)]
 
 
 if __name__ == '__main__':
